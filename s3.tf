@@ -3,6 +3,7 @@ resource "aws_s3_bucket" "mybucket" {
   bucket = var.bucket_name
 }
 
+# Bucket ownership controls to disable ACLs (BucketOwnerPreferred)
 resource "aws_s3_bucket_ownership_controls" "example" {
   bucket = aws_s3_bucket.mybucket.id
 
@@ -11,6 +12,7 @@ resource "aws_s3_bucket_ownership_controls" "example" {
   }
 }
 
+# Disable block public access settings at bucket level to allow public policies
 resource "aws_s3_bucket_public_access_block" "example" {
   bucket = aws_s3_bucket.mybucket.id
 
@@ -20,9 +22,7 @@ resource "aws_s3_bucket_public_access_block" "example" {
   restrict_public_buckets = false
 }
 
-# Remove aws_s3_bucket_acl resource since ACLs are disabled
-
-# Upload S3 objects without ACLs
+# Upload website files WITHOUT ACLs (ACLs not supported when ownership controls disable ACLs)
 resource "aws_s3_object" "index" {
   bucket       = aws_s3_bucket.mybucket.id
   key          = "index.html"
@@ -65,6 +65,7 @@ resource "aws_s3_bucket_policy" "public_read_policy" {
       Resource  = ["${aws_s3_bucket.mybucket.arn}/*"]
     }]
   })
+  depends_on = [aws_s3_bucket_public_access_block.example]
 }
 
 # S3 website configuration
